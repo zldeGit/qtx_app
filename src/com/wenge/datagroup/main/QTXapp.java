@@ -31,12 +31,12 @@ public class QTXapp {
 		JSONObject data = new JSONObject();
 
 		int first_id = 93474;
-		List<String> list = queryData(first_id);
 		new Thread(() ->
 		{
 			syncCount();
 		}
 		,"互动量同步").start();
+		List<String> list = queryData(first_id);
 		while (true) {
 			try {
 				if (list != null && !list.isEmpty()) {
@@ -137,6 +137,7 @@ public class QTXapp {
 	public static void syncCount() {
 		while (true) {
 			logger.info("互动量推送开始");
+			int count=0;
 			List<String> list = queryData();
 			for (String result : list) {
 				JSONObject data = new JSONObject();
@@ -178,6 +179,8 @@ public class QTXapp {
 					logger.info("Sent QTX data to kafka is failed. uuid= " + uuid + " spent time="
 							+ (endTime - startTime) + "ms.");
 				}
+				count++;
+				logger.info("互动量推送条数"+count+"条:"+data.toJSONString());
 			}
 			logger.info("互动量推送完毕，休眠5分钟！");
 			DoSleep5minuets();
@@ -186,7 +189,7 @@ public class QTXapp {
 
 	//查询互动量数据
 	public static List<String> queryData() {
-		String sql = "select url,read_num,share_num,like_num,comment_num from sync_caibian_data_interaction ";
+		String sql = "select url,read_num,share_num,like_num,comment_num from sync_caibian_data_Interaction ";
 		List<Map<String, Object>> list = JdbcTemp.queryForList(sql);
 //		System.out.println(list);
 		String res = null;
