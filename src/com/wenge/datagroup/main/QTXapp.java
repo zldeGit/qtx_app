@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.alibaba.fastjson.JSONArray;
 import jdk.nashorn.internal.objects.annotations.Where;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -146,11 +147,13 @@ public class QTXapp {
 				JSONObject json = JSONObject.parseObject(res);
 				//必传参数
 				data.put("insert_time", sdf.format(new Date()));
+				data.put("updateTime", sdf.format(new Date()));
 				String url = json.getString("url");
 				String uuid = md5.getMD5digest(url, "utf-8");
 				data.put("uuid", uuid + new Date().getTime());
 				data.put("md5", uuid);
-
+				data.put("S", "RMT");
+				data.put("url", url);
 				//封装互动量
 				JSONObject num = new JSONObject();
 
@@ -165,8 +168,10 @@ public class QTXapp {
 				num.put("id", uuid);
 				num.put("index", "appdata");
 				num.put("type", "appdata");
-				String relation = num.toJSONString();
-				data.put("relation", relation);
+				JSONArray objects = new JSONArray();
+				objects.add(num);
+				data.put("relation", objects.toJSONString());
+
 				logger.info("result: " + data);
 				long startTime = System.currentTimeMillis();
 				boolean isSuccess = SystemRpcService.kafkaService.send("appdata_record", System.currentTimeMillis() + "",
@@ -175,14 +180,16 @@ public class QTXapp {
 				if (isSuccess) {
 					logger.info("Sent QTX data to kafka is successful. uuid= " + uuid
 							+ " spent time=" + (endTime - startTime) + "ms.");
+					count++;
+					logger.info("互动量推送条数"+count+"条:"+data.toJSONString());
 				} else {
 					logger.info("Sent QTX data to kafka is failed. uuid= " + uuid + " spent time="
 							+ (endTime - startTime) + "ms.");
+					logger.info("互动量推送失败"+data.toJSONString());
 				}
-				count++;
-				logger.info("互动量推送条数"+count+"条:"+data.toJSONString());
+
 			}
-			logger.info("互动量推送完毕，休眠5分钟！");
+			logger.info("互动量推送完毕，休眠半小时！");
 			DoSleep5minuets();
 		}
 	}
