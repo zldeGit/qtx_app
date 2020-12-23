@@ -1,11 +1,9 @@
 package com.wenge.datagroup.main;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.alibaba.fastjson.JSONArray;
 import jdk.nashorn.internal.objects.annotations.Where;
@@ -17,6 +15,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.wenge.datagroup.utils.JdbcTemp;
 import com.wenge.datagroup.utils.MD5;
 import com.wenge.datagroup.utils.SystemRpcService;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
 
 
 public class QTXapp {
@@ -31,7 +31,7 @@ public class QTXapp {
 	public static void main(String[] args) {
 		JSONObject data = new JSONObject();
 
-		int first_id = 93474;
+		int first_id = 152130;
 		new Thread(() ->
 		{
 			syncCount();
@@ -76,14 +76,15 @@ public class QTXapp {
 						data.put("insert_time", sdf.format(new Date()));
 						logger.info("result: " + data);
 						long startTime = System.currentTimeMillis();
-						boolean isSuccess = SystemRpcService.kafkaService.send("appdata", System.currentTimeMillis() + "",
-								data.toJSONString());
+//						boolean isSuccess = SystemRpcService.kafkaService.send("appdata", System.currentTimeMillis() + "",
+//								data.toJSONString());
+						int appdata_record = sendMessage(data.toJSONString(), "appdata");
 						long endTime = System.currentTimeMillis();
-						if (isSuccess) {
-							logger.info("Sent QTX data to kafka is successful. uuid= " + uuid
+						if (appdata_record==1) {
+							logger.info("调用插入接口成功. uuid= " + uuid
 									+ " spent time=" + (endTime - startTime) + "ms.");
 						} else {
-							logger.info("Sent QTX data to kafka is failed. uuid= " + uuid + " spent time="
+							logger.info("调用更新接口失败. uuid= " + uuid + " spent time="
 									+ (endTime - startTime) + "ms.");
 						}
 					}
@@ -137,63 +138,80 @@ public class QTXapp {
 	//同步互动量
 	public static void syncCount() {
 		while (true) {
-			logger.info("互动量推送开始");
-			int count=0;
-			List<String> list = queryData();
-			for (String result : list) {
-				JSONObject data = new JSONObject();
-				String res = result;
-				System.out.println(res);
-				JSONObject json = JSONObject.parseObject(res);
-				//必传参数
-				data.put("insert_time", sdf.format(new Date()));
-				data.put("updateTime", sdf.format(new Date()));
-				String url = json.getString("url");
-				String uuid = md5.getMD5digest(url, "utf-8");
-				data.put("uuid", uuid + new Date().getTime());
-				data.put("md5", uuid);
-				data.put("S", "RMT");
-				data.put("url", url);
-				//封装互动量
-				JSONObject num = new JSONObject();
+			try {
+				logger.info("互动量推送开始");
+				int count = 0;
+				List<String> list = queryData();
+				for (String result : list) {
+					JSONObject data = new JSONObject();
+					String res = result;
+					System.out.println(res);
+					JSONObject json = JSONObject.parseObject(res);
+					//必传参数
+					data.put("insert_time", sdf.format(new Date()));
+					data.put("updateTime", sdf.format(new Date()));
+					String url = json.getString("url");
+					String uuid = md5.getMD5digest(url, "utf-8");
+					data.put("uuid", uuid + new Date().getTime());
+					data.put("md5", uuid);
+					data.put("S", "RMT");
+					data.put("url", url);
+					//封装互动量
+					JSONObject num = new JSONObject();
 
-				long read_num = json.getLongValue("read_num");
-				long share_num = json.getLongValue("share_num");
-				long like_num = json.getLongValue("like_num");
-				long comment_num = json.getLongValue("comment_num");
-				num.put("share_count", read_num);
-				num.put("read_count", share_num);
-				num.put("up_count", like_num);
-				num.put("cmt_count", comment_num);
-				num.put("id", uuid);
-				num.put("index", "appdata");
-				num.put("type", "appdata");
-				JSONArray objects = new JSONArray();
-				objects.add(num);
-				data.put("relation", objects.toJSONString());
+					long read_num = json.getLongValue("read_num");
+					long share_num = json.getLongValue("share_num");
+					long like_num = json.getLongValue("like_num");
+					long comment_num = json.getLongValue("comment_num");
+					num.put("share_count", read_num);
+					num.put("read_count", share_num);
+					num.put("up_count", like_num);
+					num.put("cmt_count", comment_num);
+					num.put("id", uuid);
+					num.put("index", "appdata");
+					num.put("type", "appdata");
+					JSONArray objects = new JSONArray();
+					objects.add(num);
+					data.put("relation", objects.toJSONString());
 
-				logger.info("result: " + data);
-				long startTime = System.currentTimeMillis();
-				boolean isSuccess = SystemRpcService.kafkaService.send("appdata_record", System.currentTimeMillis() + "",
-						data.toJSONString());
-				long endTime = System.currentTimeMillis();
-				if (isSuccess) {
-					logger.info("Sent QTX data to kafka is successful. uuid= " + uuid
-							+ " spent time=" + (endTime - startTime) + "ms.");
-					count++;
-					logger.info("互动量推送条数"+count+"条:"+data.toJSONString());
-				} else {
-					logger.info("Sent QTX data to kafka is failed. uuid= " + uuid + " spent time="
-							+ (endTime - startTime) + "ms.");
-					logger.info("互动量推送失败"+data.toJSONString());
+					logger.info("result: " + data);
+					long startTime = System.currentTimeMillis();
+					int appdata_record = sendMessage(data.toJSONString(), "appdata_record");
+//					boolean isSuccess = SystemRpcService.kafkaService.send("appdata_record", System.currentTimeMillis() + "",
+//							data.toJSONString());
+					long endTime = System.currentTimeMillis();
+					if (appdata_record==1) {
+						logger.info("调用更新接口成功. uuid= " + uuid
+								+ " spent time=" + (endTime - startTime) + "ms.");
+						count++;
+						logger.info("互动量推送条数" + count + "条:" + data.toJSONString());
+					} else {
+						logger.info("调用更新接口失败. uuid= " + uuid + " spent time="
+								+ (endTime - startTime) + "ms.");
+						logger.info("互动量推送失败" + data.toJSONString());
+					}
+
 				}
-
+				logger.info("互动量推送完毕，休眠半小时！");
+				DoSleep5minuets();
+			} catch (Exception e) {
+				e.printStackTrace();
+				logger.info("发生异常,休眠5分钟");
+				DoSleep5minuets();
 			}
-			logger.info("互动量推送完毕，休眠半小时！");
-			DoSleep5minuets();
+
 		}
 	}
 
+	public static int sendMessage(String msg, String topic) throws IOException {
+		HashMap<String, String> map = new HashMap<>();
+		map.put("msg", msg);
+		map.put("topic", topic);
+		Connection con = Jsoup.connect("http://192.168.10.186:8082/kafka/allMediaTokafka").timeout(30000).method(Connection.Method.POST).data(map).ignoreContentType(true);
+		Connection.Response execute = con.execute();
+		JSONObject jsonObject = JSONObject.parseObject(execute.body());
+		return jsonObject.getIntValue("status");
+	}
 	//查询互动量数据
 	public static List<String> queryData() {
 		String sql = "select url,read_num,share_num,like_num,comment_num from sync_caibian_data_Interaction ";
