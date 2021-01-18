@@ -207,7 +207,7 @@ public class QTXapp {
 		HashMap<String, String> map = new HashMap<>();
 		map.put("msg", msg);
 		map.put("topic", topic);
-		Connection con = Jsoup.connect("http://192.168.10.186:8082/kafka/allMediaTokafka").timeout(30000).method(Connection.Method.POST).data(map).ignoreContentType(true);
+		Connection con = Jsoup.connect("http://220.194.140.39:30015/kafka/allMediaTokafka").timeout(30000).method(Connection.Method.POST).data(map).ignoreContentType(true);
 		Connection.Response execute = con.execute();
 		JSONObject jsonObject = JSONObject.parseObject(execute.body());
 		return jsonObject.getIntValue("status");
