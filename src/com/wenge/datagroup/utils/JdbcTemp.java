@@ -28,22 +28,21 @@ public class JdbcTemp {
 	public static String driver = "com.mysql.jdbc.Driver"; 
 	
 	//远程
-	public static String url = "jdbc:mysql://192.168.10.232:3306/" + "meltmedia_data" + "?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull";
+	public static String url = "jdbc:mysql://10.99.10.20:3306/" + "meltmedia_data" + "?useSSL=false&useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&autoReconnect=true&failOverReadOnly=false";
 //								jdbc:mysql://192.168.10.175:3306/yuansousuo?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull
-	public static String user = "xhs";
-	public static String password = "xhs%2018";
+	public static String user = "rmt";
+	public static String password = "rmt%2020";
 
 	static{
 		pools= new TimerConnectionPool(driver, url, user, password);
 		pools.setMaxCount(50);
 	}
-	
+	//java -Djava.ext.dirs=/u01/isi/qtxapp/lib com.wenge.datagroup.main.QTXapp
 	public static void main(String[] args) {
 		List<String> list = JdbcTemp.showDatabasesForList();
 		for(String bases : list){
 			System.out.println(bases);
 		}
-		
 	}
 	
 	/**
