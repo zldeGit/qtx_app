@@ -31,7 +31,7 @@ public class QTXapp {
 	public static void main(String[] args) {
 		JSONObject data = new JSONObject();
 
-		int first_id = 152130;
+		int first_id = 230288;
 		new Thread(() ->
 		{
 			syncCount();
@@ -207,7 +207,7 @@ public class QTXapp {
 		HashMap<String, String> map = new HashMap<>();
 		map.put("msg", msg);
 		map.put("topic", topic);
-		Connection con = Jsoup.connect("http://220.194.140.39:30015/kafka/allMediaTokafka").timeout(30000).method(Connection.Method.POST).data(map).ignoreContentType(true);
+		Connection con = Jsoup.connect("http://10.99.10.4:11101/kafka/allMediaTokafka").timeout(30000).method(Connection.Method.POST).data(map).ignoreContentType(true);
 		Connection.Response execute = con.execute();
 		JSONObject jsonObject = JSONObject.parseObject(execute.body());
 		return jsonObject.getIntValue("status");
