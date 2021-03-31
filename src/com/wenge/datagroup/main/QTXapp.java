@@ -2,6 +2,7 @@ package com.wenge.datagroup.main;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.channels.Channel;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -23,9 +24,18 @@ public class QTXapp {
 	private static final Logger logger = Logger.getLogger(QTXapp.class);
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private static MD5 md5 = new MD5();
+	private static HashSet<String> filterSet = new HashSet<>();
 
 	static {
 		PropertyConfigurator.configure("config" + File.separator + "log4j.properties");
+		filterSet.addAll(Arrays.asList("弥勒头条",
+				"麒麟云",
+				"i华宁",
+				"西盟云",
+				"智联古城",
+				"云上隆阳",
+				"柔情富宁",
+				"春韵勐海"));
 	}
 
 	public static void main(String[] args) {
@@ -36,7 +46,7 @@ public class QTXapp {
 		{
 			syncCount();
 		}
-		,"互动量同步").start();
+				, "互动量同步").start();
 		List<String> list = queryData(first_id);
 		while (true) {
 			try {
@@ -62,7 +72,11 @@ public class QTXapp {
 						data.put("source_url", url);
 						data.put("url", url);
 						String uuid = md5.getMD5digest(url, "utf-8");
+
 						data.put("uuid", uuid);
+						if (filterSet.contains(website)) {
+							data.put("uuid", uuid + "z1");
+						}
 						String content = json.getString("content");
 						data.put("content", content);
 						Date p_time = json.getDate("pubtime");
@@ -80,7 +94,7 @@ public class QTXapp {
 //								data.toJSONString());
 						int appdata_record = sendMessage(data.toJSONString(), "appdata");
 						long endTime = System.currentTimeMillis();
-						if (appdata_record==1) {
+						if (appdata_record == 1) {
 							logger.info("调用插入接口成功. uuid= " + uuid
 									+ " spent time=" + (endTime - startTime) + "ms.");
 						} else {
@@ -180,7 +194,7 @@ public class QTXapp {
 //					boolean isSuccess = SystemRpcService.kafkaService.send("appdata_record", System.currentTimeMillis() + "",
 //							data.toJSONString());
 					long endTime = System.currentTimeMillis();
-					if (appdata_record==1) {
+					if (appdata_record == 1) {
 						logger.info("调用更新接口成功. uuid= " + uuid
 								+ " spent time=" + (endTime - startTime) + "ms.");
 						count++;
@@ -212,6 +226,7 @@ public class QTXapp {
 		JSONObject jsonObject = JSONObject.parseObject(execute.body());
 		return jsonObject.getIntValue("status");
 	}
+
 	//查询互动量数据
 	public static List<String> queryData() {
 		String sql = "select url,read_num,share_num,like_num,comment_num from sync_caibian_data_Interaction ";
