@@ -135,7 +135,7 @@ public class QTXapp {
 
 	public static void DoSleep() {
 		try {
-			Thread.sleep(30 * 60 * 1000);
+			Thread.sleep(10 * 60 * 1000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
