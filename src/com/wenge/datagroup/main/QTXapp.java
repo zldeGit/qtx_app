@@ -166,21 +166,21 @@ public class QTXapp {
 					data.put("updateTime", sdf.format(new Date()));
 					String url = json.getString("url");
 					String uuid = md5.getMD5digest(url, "utf-8");
-					data.put("uuid", uuid + new Date().getTime());
+					data.put("uuid", uuid + System.currentTimeMillis());
 					data.put("md5", uuid);
 					data.put("S", "RMT");
 					data.put("url", url);
 					//封装互动量
 					JSONObject num = new JSONObject();
 
-					long read_num = json.getLongValue("read_num");
-					long share_num = json.getLongValue("share_num");
-					long like_num = json.getLongValue("like_num");
-					long comment_num = json.getLongValue("comment_num");
-					num.put("share_count", read_num);
-					num.put("read_count", share_num);
-					num.put("up_count", like_num);
-					num.put("cmt_count", comment_num);
+					long readNum = json.getLongValue("read_num");
+					long shareNum = json.getLongValue("share_num");
+					long likeNum = json.getLongValue("like_num");
+					long commentNum = json.getLongValue("comment_num");
+					num.put("share_count", readNum);
+					num.put("read_count", shareNum);
+					num.put("up_count", likeNum);
+					num.put("cmt_count", commentNum);
 					num.put("id", uuid);
 					num.put("index", "appdata");
 					num.put("type", "appdata");
